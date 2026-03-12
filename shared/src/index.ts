@@ -311,6 +311,9 @@ export const MessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string(),
   timestamp: z.coerce.date(),
+  // Completion metadata for assistant messages (set when message generation finishes)
+  completedAt: z.coerce.date().optional(),
+  completionReason: z.enum(['success', 'error', 'out_of_tokens', 'killed']).optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;

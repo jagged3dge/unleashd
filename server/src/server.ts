@@ -1540,7 +1540,7 @@ wss.on('connection', (ws: WebSocket) => {
           const swarmDebugPrefix = data.swarmDebugPrefix ?? null;
 
           // Validate provider against the registry — no manual list needed
-          if (!(provider in providers)) {
+          if (!Object.hasOwn(providers, provider)) {
             ws.send(
               JSON.stringify({
                 type: 'error',
@@ -1693,7 +1693,7 @@ wss.on('connection', (ws: WebSocket) => {
         case 'set_provider': {
           const conv = conversations.get(data.conversationId);
           if (conv) {
-            if (!(data.provider in providers)) {
+            if (!Object.hasOwn(providers, data.provider)) {
               ws.send(
                 JSON.stringify({
                   type: 'error',
@@ -2001,7 +2001,7 @@ app.post('/api/ui-state', express.json({ limit: '1mb' }), (req: Request, res: Re
 // Used by the Sidebar model dropdown to show available models per provider.
 app.get('/api/models', (req: Request, res: Response) => {
   const providerName = (req.query.provider as string) || 'claude';
-  if (!(providerName in providers)) {
+  if (!Object.hasOwn(providers, providerName)) {
     res
       .status(400)
       .json({
