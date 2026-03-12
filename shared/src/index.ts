@@ -110,11 +110,40 @@ export {
 } from './providers/codex.types.js';
 
 // =============================================================================
+// Domain Errors (Pi Provider)
+// =============================================================================
+
+export {
+  PiProviderError,
+  ModelNotFoundError,
+  InvalidModelIdError,
+  ThinkingNotSupportedError,
+  InvalidConversationIdError,
+  NegativeAmountError,
+  CurrencyMismatchError,
+  isPiProviderError,
+  getErrorCode,
+  formatErrorForLogging,
+} from './domain/errors.js';
+
+// =============================================================================
+// Domain Value Objects (Pi Provider)
+// =============================================================================
+
+export {
+  ConversationId,
+  PiModelId,
+  Money,
+  ThinkingBlock,
+  SessionId,
+} from './domain/value-objects.js';
+
+// =============================================================================
 // Core Data Structures
 // =============================================================================
 
-// Provider enum for multi-CLI support (Claude, Codex, OpenCode, Gemini, etc.)
-export const ProviderSchema = z.enum(['claude', 'codex', 'opencode', 'gemini']);
+// Provider enum for multi-CLI support (Claude, Codex, OpenCode, Gemini, Pi, etc.)
+export const ProviderSchema = z.enum(['claude', 'codex', 'opencode', 'gemini', 'pi']);
 export type Provider = z.infer<typeof ProviderSchema>;
 
 export interface ProviderMetadata {
@@ -129,6 +158,7 @@ export const PROVIDER_METADATA: Record<Provider, Omit<ProviderMetadata, 'id'>> =
   codex: { label: 'Codex', shortLabel: 'X', cssClass: 'codex' },
   opencode: { label: 'OpenCode', shortLabel: 'O', cssClass: 'opencode' },
   gemini: { label: 'Gemini', shortLabel: 'G', cssClass: 'gemini' },
+  pi: { label: 'Pi Agent', shortLabel: 'P', cssClass: 'pi' },
 };
 
 export const PROVIDER_OPTIONS: readonly ProviderMetadata[] = [
@@ -136,6 +166,7 @@ export const PROVIDER_OPTIONS: readonly ProviderMetadata[] = [
   { id: 'codex', ...PROVIDER_METADATA.codex },
   { id: 'opencode', ...PROVIDER_METADATA.opencode },
   { id: 'gemini', ...PROVIDER_METADATA.gemini },
+  { id: 'pi', ...PROVIDER_METADATA.pi },
 ];
 
 export const PROVIDER_IDS: readonly Provider[] = PROVIDER_OPTIONS.map((provider) => provider.id);
@@ -171,6 +202,18 @@ export const GeminiModelSchema = z.enum([
   'gemini-2.0-flash',
 ]);
 export type GeminiModel = z.infer<typeof GeminiModelSchema>;
+
+// Pi supports flexible model patterns: provider/model[:thinking] or short aliases
+export const ThinkingLevelSchema = z.enum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh']);
+export type ThinkingLevel = z.infer<typeof ThinkingLevelSchema>;
+
+export const PiModelSchema = z.union([
+  // provider/model format (with optional :thinking suffix)
+  z.string().regex(/^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._:+-]*$/i),
+  // Short aliases for common models
+  z.enum(['opus', 'sonnet', 'haiku', 'gpt-4o', 'gpt-4o-mini']),
+]);
+export type PiModel = z.infer<typeof PiModelSchema>;
 
 export const CODEX_THINKING_OPTIONS = ['high', 'medium', 'xhigh'] as const;
 export type CodexThinkingOption = (typeof CODEX_THINKING_OPTIONS)[number];
@@ -296,6 +339,7 @@ export const ModelIdSchema = z.union([
   CodexModelSchema,
   GeminiModelSchema,
   OpenCodeModelSchema,
+  PiModelSchema,
 ]);
 export type ModelId = z.infer<typeof ModelIdSchema>;
 
