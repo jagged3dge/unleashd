@@ -10,6 +10,7 @@ import claudeProvider from './claude';
 import codexProvider from './codex';
 import geminiProvider from './gemini';
 import opencodeProvider from './opencode';
+import piProvider from './pi';
 
 /**
  * Unified event types consumed by conversation state handling.
@@ -36,6 +37,7 @@ const providers: Record<ProviderName, Provider> = {
   codex: codexProvider,
   opencode: opencodeProvider,
   gemini: geminiProvider,
+  pi: piProvider,
 };
 
 /**
