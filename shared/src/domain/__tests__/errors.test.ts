@@ -3,8 +3,7 @@
  * TDD: Tests written FIRST, before implementation
  */
 
-import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 
 // These imports will fail until we implement the errors
 import {
@@ -20,15 +19,15 @@ import {
 describe('PiProviderError (base class)', () => {
   it('should create error with message and code', () => {
     const error = new PiProviderError('Test error', 'TEST_CODE');
-    assert.strictEqual(error.message, 'Test error');
-    assert.strictEqual(error.code, 'TEST_CODE');
-    assert.strictEqual(error.name, 'PiProviderError');
+    expect(error.message).toBe('Test error');
+    expect(error.code).toBe('TEST_CODE');
+    expect(error.name).toBe('PiProviderError');
   });
 
   it('should support error cause chaining', () => {
     const cause = new Error('Original error');
     const error = new PiProviderError('Wrapper error', 'WRAPPER_CODE', cause);
-    assert.strictEqual(error.cause, cause);
+    expect(error.cause).toBe(cause);
   });
 
   it('should be instance of Error', () => {
@@ -46,9 +45,9 @@ describe('PiProviderError (base class)', () => {
 describe('ModelNotFoundError', () => {
   it('should create error with model ID', () => {
     const error = new ModelNotFoundError('anthropic/claude-unknown');
-    assert.strictEqual(error.message, 'Model not found: anthropic/claude-unknown');
-    assert.strictEqual(error.code, 'MODEL_NOT_FOUND');
-    assert.strictEqual(error.name, 'ModelNotFoundError');
+    expect(error.message).toBe('Model not found: anthropic/claude-unknown');
+    expect(error.code).toBe('MODEL_NOT_FOUND');
+    expect(error.name).toBe('ModelNotFoundError');
   });
 
   it('should extend PiProviderError', () => {
@@ -65,8 +64,8 @@ describe('InvalidModelIdError', () => {
       error.message,
       'Invalid model ID "invalid": Must contain slash'
     );
-    assert.strictEqual(error.code, 'INVALID_MODEL_ID');
-    assert.strictEqual(error.name, 'InvalidModelIdError');
+    expect(error.code).toBe('INVALID_MODEL_ID');
+    expect(error.name).toBe('InvalidModelIdError');
   });
 
   it('should extend PiProviderError', () => {
@@ -82,8 +81,8 @@ describe('ThinkingNotSupportedError', () => {
       error.message,
       'Model anthropic/haiku does not support thinking mode'
     );
-    assert.strictEqual(error.code, 'THINKING_NOT_SUPPORTED');
-    assert.strictEqual(error.name, 'ThinkingNotSupportedError');
+    expect(error.code).toBe('THINKING_NOT_SUPPORTED');
+    expect(error.name).toBe('ThinkingNotSupportedError');
   });
 
   it('should extend PiProviderError', () => {
@@ -99,8 +98,8 @@ describe('InvalidConversationIdError', () => {
       error.message,
       'Invalid conversation ID: not-a-uuid. Must be a valid UUID.'
     );
-    assert.strictEqual(error.code, 'INVALID_CONVERSATION_ID');
-    assert.strictEqual(error.name, 'InvalidConversationIdError');
+    expect(error.code).toBe('INVALID_CONVERSATION_ID');
+    expect(error.name).toBe('InvalidConversationIdError');
   });
 
   it('should extend PiProviderError', () => {
@@ -112,9 +111,9 @@ describe('InvalidConversationIdError', () => {
 describe('NegativeAmountError', () => {
   it('should create error with appropriate message', () => {
     const error = new NegativeAmountError();
-    assert.strictEqual(error.message, 'Money amount cannot be negative');
-    assert.strictEqual(error.code, 'NEGATIVE_AMOUNT');
-    assert.strictEqual(error.name, 'NegativeAmountError');
+    expect(error.message).toBe('Money amount cannot be negative');
+    expect(error.code).toBe('NEGATIVE_AMOUNT');
+    expect(error.name).toBe('NegativeAmountError');
   });
 
   it('should extend PiProviderError', () => {
@@ -130,8 +129,8 @@ describe('CurrencyMismatchError', () => {
       error.message,
       'Cannot operate on different currencies: USD and EUR'
     );
-    assert.strictEqual(error.code, 'CURRENCY_MISMATCH');
-    assert.strictEqual(error.name, 'CurrencyMismatchError');
+    expect(error.code).toBe('CURRENCY_MISMATCH');
+    expect(error.name).toBe('CurrencyMismatchError');
   });
 
   it('should extend PiProviderError', () => {
@@ -200,9 +199,9 @@ describe('Error serialization', () => {
     });
     
     const parsed = JSON.parse(serialized);
-    assert.strictEqual(parsed.name, 'ModelNotFoundError');
-    assert.strictEqual(parsed.message, 'Model not found: test-model');
-    assert.strictEqual(parsed.code, 'MODEL_NOT_FOUND');
+    expect(parsed.name).toBe('ModelNotFoundError');
+    expect(parsed.message).toBe('Model not found: test-model');
+    expect(parsed.code).toBe('MODEL_NOT_FOUND');
   });
 
   it('should preserve cause in serialization', () => {
@@ -210,6 +209,6 @@ describe('Error serialization', () => {
     const error = new PiProviderError('Wrapper', 'WRAPPER', cause);
     
     // Cause is preserved in the object
-    assert.strictEqual(error.cause, cause);
+    expect(error.cause).toBe(cause);
   });
 });

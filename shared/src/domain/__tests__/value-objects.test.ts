@@ -3,8 +3,8 @@
  * TDD: Tests written FIRST, before implementation
  */
 
-import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
+
 
 import {
   ConversationId,
@@ -28,7 +28,7 @@ describe('ConversationId', () => {
   describe('construction', () => {
     it('should create from valid UUID string', () => {
       const id = ConversationId.fromString(validUuid);
-      assert.strictEqual(id.toString(), validUuid);
+      expect(id.toString()).toBe(validUuid);
     });
 
     it('should reject invalid UUID', () => {
@@ -63,7 +63,7 @@ describe('ConversationId', () => {
   describe('immutability', () => {
     it('should be immutable', () => {
       const id = ConversationId.fromString(validUuid);
-      assert.strictEqual(id.toString(), validUuid);
+      expect(id.toString()).toBe(validUuid);
       // toString should always return same value
       assert.strictEqual(id.toString(), id.toString());
     });
@@ -74,19 +74,19 @@ describe('PiModelId', () => {
   describe('parsing simple format', () => {
     it('should parse provider/model format', () => {
       const id = PiModelId.parse('anthropic/claude-3-5-sonnet-latest');
-      assert.strictEqual(id.toString(), 'anthropic/claude-3-5-sonnet-latest');
+      expect(id.toString()).toBe('anthropic/claude-3-5-sonnet-latest');
     });
 
     it('should parse model with dots and dashes', () => {
       const id = PiModelId.parse('google/gemini-2.0-flash');
-      assert.strictEqual(id.toString(), 'google/gemini-2.0-flash');
+      expect(id.toString()).toBe('google/gemini-2.0-flash');
     });
   });
 
   describe('parsing with thinking', () => {
     it('should parse model with thinking level', () => {
       const id = PiModelId.parse('openai/gpt-4o:high');
-      assert.strictEqual(id.toString(), 'openai/gpt-4o:high');
+      expect(id.toString()).toBe('openai/gpt-4o:high');
       assert.ok(id.hasThinking());
     });
 
@@ -151,7 +151,7 @@ describe('Money', () => {
   describe('construction', () => {
     it('should create money from dollars', () => {
       const money = Money.dollars(10.50);
-      assert.strictEqual(money.getAmount(), 10.50);
+      expect(money.getAmount()).toBe(10.50);
     });
 
     it('should reject negative amounts', () => {
@@ -163,7 +163,7 @@ describe('Money', () => {
 
     it('should allow zero amount', () => {
       const money = Money.dollars(0);
-      assert.strictEqual(money.getAmount(), 0);
+      expect(money.getAmount()).toBe(0);
     });
   });
 
@@ -172,14 +172,14 @@ describe('Money', () => {
       const m1 = Money.dollars(10);
       const m2 = Money.dollars(5);
       const sum = m1.add(m2);
-      assert.strictEqual(sum.getAmount(), 15);
+      expect(sum.getAmount()).toBe(15);
     });
 
     it('should subtract money with same currency', () => {
       const m1 = Money.dollars(10);
       const m2 = Money.dollars(3);
       const diff = m1.subtract(m2);
-      assert.strictEqual(diff.getAmount(), 7);
+      expect(diff.getAmount()).toBe(7);
     });
 
     it('should allow subtraction resulting in negative', () => {
@@ -213,12 +213,12 @@ describe('Money', () => {
   describe('formatting', () => {
     it('should format dollars with 4 decimal places', () => {
       const money = Money.dollars(10.1234);
-      assert.strictEqual(money.format(), '$10.1234');
+      expect(money.format()).toBe('$10.1234');
     });
 
     it('should format small amounts correctly', () => {
       const money = Money.dollars(0.0025);
-      assert.strictEqual(money.format(), '$0.0025');
+      expect(money.format()).toBe('$0.0025');
     });
   });
 
@@ -228,9 +228,9 @@ describe('Money', () => {
       const m2 = Money.dollars(5);
       const sum = m1.add(m2);
       
-      assert.strictEqual(m1.getAmount(), 10); // original unchanged
-      assert.strictEqual(m2.getAmount(), 5);  // original unchanged
-      assert.strictEqual(sum.getAmount(), 15); // new value
+      expect(m1.getAmount()).toBe(10); // original unchanged
+      expect(m2.getAmount()).toBe(5);  // original unchanged
+      expect(sum.getAmount()).toBe(15); // new value
     });
 
     it('should not mutate original on subtract', () => {
@@ -238,8 +238,8 @@ describe('Money', () => {
       const m2 = Money.dollars(3);
       const diff = m1.subtract(m2);
       
-      assert.strictEqual(m1.getAmount(), 10); // original unchanged
-      assert.strictEqual(diff.getAmount(), 7); // new value
+      expect(m1.getAmount()).toBe(10); // original unchanged
+      expect(diff.getAmount()).toBe(7); // new value
     });
   });
 });
@@ -248,8 +248,8 @@ describe('ThinkingBlock', () => {
   describe('creation', () => {
     it('should create non-empty thinking block', () => {
       const block = ThinkingBlock.create('Analyzing the problem...', 0);
-      assert.strictEqual(block.getContent(), 'Analyzing the problem...');
-      assert.strictEqual(block.getIndex(), 0);
+      expect(block.getContent()).toBe('Analyzing the problem...');
+      expect(block.getIndex()).toBe(0);
       assert.ok(!block.isEmpty());
     });
 
@@ -266,14 +266,14 @@ describe('ThinkingBlock', () => {
     it('should create empty block explicitly', () => {
       const block = ThinkingBlock.empty(0);
       assert.ok(block.isEmpty());
-      assert.strictEqual(block.getContent(), '');
+      expect(block.getContent()).toBe('');
     });
   });
 
   describe('index', () => {
     it('should store correct index', () => {
       const block = ThinkingBlock.create('content', 5);
-      assert.strictEqual(block.getIndex(), 5);
+      expect(block.getIndex()).toBe(5);
     });
 
     it('should reject negative index', () => {
@@ -287,7 +287,7 @@ describe('ThinkingBlock', () => {
   describe('immutability', () => {
     it('should be immutable', () => {
       const block = ThinkingBlock.create('content', 0);
-      assert.strictEqual(block.getContent(), 'content');
+      expect(block.getContent()).toBe('content');
       assert.strictEqual(block.getContent(), block.getContent());
     });
   });
@@ -310,7 +310,7 @@ describe('SessionId', () => {
   describe('construction', () => {
     it('should create from string', () => {
       const id = SessionId.fromString('test-session-123');
-      assert.strictEqual(id.toString(), 'test-session-123');
+      expect(id.toString()).toBe('test-session-123');
     });
 
     it('should reject empty string', () => {
@@ -345,7 +345,7 @@ describe('SessionId', () => {
   describe('immutability', () => {
     it('should be immutable', () => {
       const id = SessionId.fromString('session-1');
-      assert.strictEqual(id.toString(), 'session-1');
+      expect(id.toString()).toBe('session-1');
       assert.strictEqual(id.toString(), id.toString());
     });
   });
@@ -372,7 +372,7 @@ describe('Value object integration', () => {
       '--model', 'anthropic/claude-3-5-sonnet',
       '--thinking', 'high'
     ]);
-    assert.strictEqual(totalCost.format(), '$0.0055');
+    expect(totalCost.format()).toBe('$0.0055');
     assert.ok(!thinking.isEmpty());
   });
 });
