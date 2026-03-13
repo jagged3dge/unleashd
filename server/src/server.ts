@@ -447,6 +447,10 @@ class Conversation extends EventEmitter {
   // The close handler checks this to skip redundant work on normal completion, while still
   // running full cleanup on crash/kill/error paths where message_complete never fired.
   private _turnCompletedCleanly = false;
+  // Buffer for accumulating text chunks from Pi RPC streaming
+  private _piTextBuffer = '';
+  // Buffer for accumulating thinking blocks from Pi RPC
+  private _piThinkingBlocks: string[] = [];
 
   constructor(opts: ConversationOptions) {
     super();
@@ -1059,6 +1063,11 @@ class Conversation extends EventEmitter {
    */
   private async sendMessageViaRpc(content: string): Promise<void> {
     console.log(`[${this.id}] Starting Pi RPC conversation`);
+    
+    // Clear buffers for new message
+    this._piTextBuffer = '';
+    this._piThinkingBlocks = [];
+    
     this.isRunning = true;
     this.isStreaming = true;
     this.broadcastStatus();
@@ -1072,22 +1081,72 @@ class Conversation extends EventEmitter {
           model: this.model || 'sonnet', // Default to sonnet if no model specified
         });
         
-        // Set up event handlers via callback - simplified for initial integration
+        // Set up event handlers via callback
         piManager.onEvent(((event: any) => {
           console.log(`[${this.id}] Pi event:`, event.type);
           
           switch (event.type) {
             case 'text':
-              // For now, just log - full streaming integration needed
-              console.log(`[${this.id}] Pi text chunk:`, event.text?.substring(0, 50));
+              // Accumulate text and broadcast chunks
+              if (event.text) {
+                this._piTextBuffer += event.text;
+                
+                // Broadcast stream chunk to WebSocket clients
+                broadcastToAll({
+                  type: 'chunk',
+                  conversationId: this.id,
+                  text: event.text,
+                });
+                
+                console.log(`[${this.id}] Pi text chunk:`, event.text.substring(0, 50));
+              }
               break;
 
             case 'thinking':
-              console.log(`[${this.id}] Pi thinking:`, event.thinking?.substring(0, 50));
+              // Accumulate thinking blocks and broadcast
+              if (event.thinking) {
+                this._piThinkingBlocks.push(event.thinking);
+                
+                // Broadcast thinking chunk (as special chunk type)
+                broadcastToAll({
+                  type: 'chunk',
+                  conversationId: this.id,
+                  text: `[THINKING] ${event.thinking}`,
+                });
+                
+                console.log(`[${this.id}] Pi thinking:`, event.thinking.substring(0, 50));
+              }
               break;
 
             case 'message_complete':
               console.log(`[${this.id}] Pi message complete`);
+              
+              // Create assistant message with accumulated text
+              if (this._piTextBuffer) {
+                const assistantMessage: Message = {
+                  role: 'assistant',
+                  content: this._piTextBuffer,
+                  timestamp: new Date(),
+                };
+                
+                // Add thinking blocks if any
+                if (this._piThinkingBlocks.length > 0) {
+                  (assistantMessage as any).thinking = this._piThinkingBlocks;
+                }
+                
+                this.messages.push(assistantMessage);
+                
+                // Broadcast message complete
+                broadcastToAll({
+                  type: 'message_complete',
+                  conversationId: this.id,
+                });
+              }
+              
+              // Clear buffers for next message
+              this._piTextBuffer = '';
+              this._piThinkingBlocks = [];
+              
               this.isRunning = false;
               this.isStreaming = false;
               this.broadcastStatus();
@@ -1103,6 +1162,11 @@ class Conversation extends EventEmitter {
 
             case 'error':
               console.error(`[${this.id}] Pi RPC error:`, event.error);
+              
+              // Clear buffers on error
+              this._piTextBuffer = '';
+              this._piThinkingBlocks = [];
+              
               this.isRunning = false;
               this.isStreaming = false;
               this.broadcastStatus();
@@ -5094,6 +5158,9 @@ async function startServer(): Promise<void> {
 
   // Start listening FIRST so the Vite proxy can connect immediately.
   server.listen(portNumber, () => {
+    // Emit message for E2E tests to detect server ready
+    console.log(`WebSocket server ready on port ${portNumber}`);
+    
     const isDevelopment = process.env.NODE_ENV === 'development';
     const domainUrl = `http://${LOCAL_DOMAIN}`;
     const fallbackUrl = isDevelopment
