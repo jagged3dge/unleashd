@@ -1,0 +1,4 @@
+{"role":"user","content":"Start saying something but I'll interrupt","timestamp":1733234567890}
+{"role":"assistant","content":[{"type":"text","text":"Let me think about th"}],"api":"messages","provider":"anthropic","model":"claude-3-5-sonnet-20241022","usage":{"input":15,"output":5,"cost":{"input":0.000045,"output":0.000015,"total":0.00006}},"stopReason":"aborted","timestamp":1733234567891}
+{"role":"user","content":"Actually, never mind","timestamp":1733234567892}
+{"role":"assistant","content":[{"type":"text","text":"No problem! Let me know if you need anything else."}],"api":"messages","provider":"anthropic","model":"claude-3-5-sonnet-20241022","usage":{"input":20,"output":12,"cost":{"input":0.00006,"output":0.000036,"total":0.000096}},"stopReason":"end_turn","timestamp":1733234567893}

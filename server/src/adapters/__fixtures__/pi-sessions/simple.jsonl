@@ -1,0 +1,4 @@
+{"role":"user","content":"Hello, pi!","timestamp":1733234567890}
+{"role":"assistant","content":[{"type":"text","text":"Hello! How can I help you today?"}],"api":"messages","provider":"anthropic","model":"claude-3-5-sonnet-20241022","usage":{"input":10,"output":8,"cost":{"input":0.00003,"output":0.000024,"total":0.000054}},"stopReason":"end_turn","timestamp":1733234567891}
+{"role":"user","content":"What's 2+2?","timestamp":1733234567892}
+{"role":"assistant","content":[{"type":"text","text":"2 + 2 = 4"}],"api":"messages","provider":"anthropic","model":"claude-3-5-sonnet-20241022","usage":{"input":15,"output":7,"cost":{"input":0.000045,"output":0.000021,"total":0.000066}},"stopReason":"end_turn","timestamp":1733234567893}
