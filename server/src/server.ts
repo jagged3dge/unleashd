@@ -35,6 +35,7 @@ import { type ProviderEvent, getProvider, providers } from './providers';
 import { isModelIdValidForProvider, modelValidationHint } from './providers/model-validation';
 import { PiConversationManager, type ConversationEventCallback } from './providers/pi-conversation-manager';
 import { PiEventTranslator } from './providers/pi-event-translator';
+import { validatePiModel } from './providers/pi';
 
 import multer from 'multer';
 import { auditLocalAgents } from './audit.js';
@@ -1745,11 +1746,27 @@ wss.on('connection', (ws: WebSocket) => {
             return;
           }
 
+          // Validate Pi model before creating conversation
+          let finalModel = model;
+          if (provider === 'pi') {
+            const validatedModel = validatePiModel(model);
+            if (validatedModel === null) {
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  message: `Invalid Pi model: ${model}. Use full model ID (e.g., 'anthropic/claude-3-5-sonnet-latest') or shorthand (e.g., 'sonnet', 'haiku', 'opus').`,
+                })
+              );
+              return;
+            }
+            finalModel = validatedModel as ModelId;
+          }
+
           const conv = new Conversation({
             id,
             workingDirectory: workingDir,
             provider,
-            model,
+            model: finalModel,
             swarmDebugPrefix,
           });
 
@@ -4521,6 +4538,144 @@ app.get('/api/usage', async (_req: Request, res: Response) => {
 
 // Serve static files from client build
 const clientDist = path.join(__dirname, '../../client/dist');
+// =============================================================================
+// Conversation HTTP API (for E2E testing and programmatic access)
+// =============================================================================
+
+/**
+ * Create a new conversation
+ * POST /api/conversations
+ * Body: { provider, model?, workingDirectory? }
+ */
+app.post('/api/conversations', express.json(), (req: Request, res: Response) => {
+  try {
+    const { provider, model, workingDirectory } = req.body;
+
+    if (!provider) {
+      res.status(400).json({ error: 'provider is required' });
+      return;
+    }
+
+    // Validate provider
+    if (!providers[provider as ProviderName]) {
+      res.status(400).json({ error: `Invalid provider: ${provider}` });
+      return;
+    }
+
+    // Validate Pi model if provider is pi
+    let validatedModel = model;
+    if (provider === 'pi') {
+      const normalized = validatePiModel(model);
+      if (normalized === null) {
+        res.status(400).json({
+          error: `Invalid Pi model: ${model}. Use full model ID or shorthand (sonnet, haiku, opus, etc.)`,
+        });
+        return;
+      }
+      validatedModel = normalized;
+    }
+
+    const id = uuidv4();
+    const workingDir = workingDirectory || process.cwd();
+
+    const conv = new Conversation({
+      id,
+      workingDirectory: workingDir,
+      provider: provider as ProviderName,
+      model: validatedModel as ModelId,
+    });
+
+    // If no model specified, use provider default
+    if (!conv.model) {
+      const providerInfo = providers[conv.provider];
+      if (providerInfo) {
+        const defaultModel = providerInfo.listModels().find((m) => m.isDefault);
+        if (defaultModel) {
+          conv.model = defaultModel.id as ModelId;
+        }
+      }
+    }
+
+    conversations.set(id, conv);
+
+    res.json(conv.toJSON());
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    res.status(500).json({ error: 'Failed to create conversation' });
+  }
+});
+
+/**
+ * Get conversation by ID
+ * GET /api/conversations/:id
+ */
+app.get('/api/conversations/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const conv = conversations.get(id);
+
+  if (!conv) {
+    res.status(404).json({ error: 'Conversation not found' });
+    return;
+  }
+
+  res.json(conv.toJSON());
+});
+
+/**
+ * Delete conversation
+ * DELETE /api/conversations/:id
+ */
+app.delete('/api/conversations/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const conv = conversations.get(id);
+
+  if (!conv) {
+    res.status(404).json({ error: 'Conversation not found' });
+    return;
+  }
+
+  conv.stop();
+  conversations.delete(id);
+
+  // Tombstone session IDs
+  deletedSessionIds.add(conv.sessionId);
+  for (const [sid, cid] of sessionAliasToConversationId) {
+    if (cid === conv.id) {
+      deletedSessionIds.add(sid);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+/**
+ * Queue a message
+ * POST /api/queue-message
+ * Body: { conversationId, content }
+ */
+app.post('/api/queue-message', express.json(), (req: Request, res: Response) => {
+  try {
+    const { conversationId, content } = req.body;
+
+    if (!conversationId || !content) {
+      res.status(400).json({ error: 'conversationId and content are required' });
+      return;
+    }
+
+    const conv = conversations.get(conversationId);
+    if (!conv) {
+      res.status(404).json({ error: 'Conversation not found' });
+      return;
+    }
+
+    conv.enqueueMessage(content);
+    res.json({ success: true, queueLength: conv.queue.length });
+  } catch (error) {
+    console.error('Error queueing message:', error);
+    res.status(500).json({ error: 'Failed to queue message' });
+  }
+});
+
 app.use(express.static(clientDist));
 
 // SPA fallback - serve index.html for all non-API routes

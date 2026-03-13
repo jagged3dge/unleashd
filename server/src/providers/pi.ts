@@ -73,6 +73,48 @@ const PI_MODELS: ModelInfo[] = [
   },
 ];
 
+/**
+ * Model aliases for convenience (used in harness configuration)
+ */
+const MODEL_ALIASES: Record<string, string> = {
+  'sonnet': 'anthropic/claude-3-5-sonnet-latest',
+  'haiku': 'anthropic/claude-3-5-haiku-latest',
+  'opus': 'anthropic/claude-3-opus-latest',
+  'gpt4o': 'openai/gpt-4o',
+  'gpt4o-mini': 'openai/gpt-4o-mini',
+  'o1': 'openai/o1',
+  'o1-mini': 'openai/o1-mini',
+  'gemini': 'google/gemini-2.0-flash-exp',
+  'gemini-pro': 'google/gemini-1.5-pro-latest',
+};
+
+/**
+ * Validate and normalize a model ID.
+ * Accepts full model IDs or shorthand aliases.
+ * Returns null if invalid.
+ */
+export function validatePiModel(modelId: string | undefined): string | null {
+  if (!modelId) {
+    return 'anthropic/claude-3-5-sonnet-latest'; // Default
+  }
+
+  // Remove thinking level if present (e.g., "sonnet:high" -> "sonnet")
+  const baseModel = modelId.split(':')[0];
+  
+  // Check if it's an alias
+  if (MODEL_ALIASES[baseModel]) {
+    return MODEL_ALIASES[baseModel];
+  }
+  
+  // Check if it's a valid full model ID
+  const isValid = PI_MODELS.some(m => m.id === baseModel);
+  if (isValid) {
+    return baseModel;
+  }
+  
+  return null; // Invalid model
+}
+
 const piProvider: Provider = {
   name: 'pi',
 
