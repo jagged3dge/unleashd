@@ -110,7 +110,14 @@ interface MessageData {
   content: string;
 }
 
-type BroadcastData = ServerMessage | ChunkData | MessageCompleteData | MessageData;
+interface ToolUseData {
+  type: 'tool_use';
+  conversationId: string;
+  toolName: string;
+  toolInput?: Record<string, unknown>;
+}
+
+type BroadcastData = ServerMessage | ChunkData | MessageCompleteData | MessageData | ToolUseData;
 
 // =============================================================================
 // Helper Functions
@@ -1119,6 +1126,25 @@ class Conversation extends EventEmitter {
                 
                 console.log(`[${this.id}] Pi thinking:`, event.thinking.substring(0, 50));
               }
+              break;
+
+            case 'tool_use':
+              // Pi executes tools automatically in RPC mode
+              // We just broadcast the tool usage for UI display
+              console.log(`[${this.id}] Pi tool use: ${event.name}`);
+              
+              // Broadcast tool_use event to WebSocket clients
+              broadcastToAll({
+                type: 'tool_use',
+                conversationId: this.id,
+                toolName: event.name,
+                toolInput: event.input,
+              });
+              
+              // Add formatted tool use to text buffer for message persistence
+              const toolDesc = `[Tool: ${event.name}]`;
+              this._piTextBuffer += `\n${toolDesc}\n`;
+              
               break;
 
             case 'message_complete':
