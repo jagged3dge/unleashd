@@ -503,6 +503,12 @@ class Conversation extends EventEmitter {
    * First turn omits resumeSessionId; subsequent turns resume with the captured session ID.
    */
   private spawnForMessage(content: string): void {
+    // Pi uses RPC mode via PiConversationManager, not executeCommand
+    if (this.provider === 'pi') {
+      console.error(`[${this.id}] Pi provider must use RPC mode, not executeCommand`);
+      return;
+    }
+
     if (this.process || this.isRunning) {
       console.warn(`[${this.id}] Already processing a message, ignoring`);
       return;

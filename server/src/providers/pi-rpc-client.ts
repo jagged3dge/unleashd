@@ -56,22 +56,24 @@ export class PiRpcClient {
     });
 
     // Set up stdout processing
-    handle.stdout.on('data', (chunk: Buffer) => {
-      const lines = this.protocolHandler.processChunk(chunk.toString());
-      
-      for (const line of lines) {
-        // Try parsing as response
-        const response = this.protocolHandler.parseResponse(line);
-        if (response) {
-          this.protocolHandler.clearPending(response.id);
-          // TODO: Emit response event
-          continue;
-        }
+    if (handle.stdout) {
+      handle.stdout.on('data', (chunk: Buffer) => {
+        const lines = this.protocolHandler.processChunk(chunk.toString());
+        
+        for (const line of lines) {
+          // Try parsing as response
+          const response = this.protocolHandler.parseResponse(line);
+          if (response) {
+            this.protocolHandler.clearPending(response.id);
+            // TODO: Emit response event
+            continue;
+          }
 
-        // Otherwise treat as event
-        this.eventStream.processLine(line);
-      }
-    });
+          // Otherwise treat as event
+          this.eventStream.processLine(line);
+        }
+      });
+    }
 
     this.running = true;
   }
@@ -129,11 +131,15 @@ export class PiRpcClient {
       throw new Error('Process not running');
     }
 
+    if (!handle.stdin) {
+      throw new Error('Process stdin not available');
+    }
+
     this.protocolHandler.trackCommand(command);
     const line = this.protocolHandler.serializeCommand(command);
     
     return new Promise((resolve, reject) => {
-      handle.stdin.write(line, (err) => {
+      handle.stdin!.write(line, (err) => {
         if (err) reject(err);
         else resolve();
       });

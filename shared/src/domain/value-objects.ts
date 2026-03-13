@@ -11,13 +11,13 @@
  * - Equality based on value, not identity
  */
 
-import { ThinkingLevel } from '../index';
+import { ThinkingLevel } from '../index.js';
 import {
   InvalidConversationIdError,
   InvalidModelIdError,
   NegativeAmountError,
   CurrencyMismatchError,
-} from './errors';
+} from './errors.js';
 
 /**
  * Conversation identifier (must be a valid UUID v4)

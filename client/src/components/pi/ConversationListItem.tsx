@@ -1,4 +1,4 @@
-import React from 'react';
+// No import needed
 
 interface ConversationListItemProps {
   id: string;
@@ -6,7 +6,7 @@ interface ConversationListItemProps {
   cost?: string;
 }
 
-export function ConversationListItem({ id, preview, cost }: ConversationListItemProps) {
+export function ConversationListItem({ id: _id, preview, cost }: ConversationListItemProps) {
   return (
     <div className="conversation-item">
       <span>{preview}</span>

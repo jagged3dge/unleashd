@@ -1,4 +1,4 @@
-import React from 'react';
+// No import needed
 
 interface CostDisplayProps {
   totalCost: string;

@@ -17,21 +17,14 @@
  */
 
 import { spawn, type ChildProcess } from 'node:child_process';
-import { getHarness } from '../../../vendor/agent-cli-tool/src/harnesses/index';
-import { buildCommand } from '../../../vendor/agent-cli-tool/src/build';
+import { getHarness, buildCommand } from '@nbardy/agent-cli';
 
 /**
  * Process handle abstraction
  * Follows Dependency Inversion Principle - depend on abstraction not concrete ChildProcess
+ * Matches ChildProcess interface for compatibility
  */
-export interface ProcessHandle {
-  pid: number | undefined;
-  stdin: NodeJS.WritableStream;
-  stdout: NodeJS.ReadableStream;
-  stderr: NodeJS.ReadableStream;
-  on(event: string, listener: (...args: any[]) => void): this;
-  kill(signal?: NodeJS.Signals | number): boolean;
-}
+export interface ProcessHandle extends ChildProcess {}
 
 /**
  * Options for spawning pi process

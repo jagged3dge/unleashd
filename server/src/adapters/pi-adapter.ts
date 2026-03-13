@@ -13,13 +13,13 @@ import type {
   PiUserMessage,
   PiAssistantMessage,
   PiToolResultMessage,
-} from '@unleashd/shared/adapters/pi-session.types';
+} from '@unleashd/shared';
 import {
   PiSessionEntrySchema,
   isPiUserMessage,
   isPiAssistantMessage,
   isPiToolResult,
-} from '@unleashd/shared/adapters/pi-session.types';
+} from '@unleashd/shared';
 
 /**
  * Unleashd conversation format (simplified for adapter)
@@ -149,8 +149,8 @@ export class PiDiskAdapter {
     } else {
       // Array of content blocks
       const textBlocks = entry.content
-        .filter(block => block.type === 'text')
-        .map(block => (block as any).text);
+        .filter((block: any) => block.type === 'text')
+        .map((block: any) => block.text);
       content = textBlocks.join('\n');
     }
 
@@ -167,8 +167,8 @@ export class PiDiskAdapter {
   private convertAssistantMessage(entry: PiAssistantMessage): Message {
     // Extract text content (excluding thinking blocks)
     const textBlocks = entry.content
-      .filter(block => block.type === 'text')
-      .map(block => (block as any).text);
+      .filter((block: any) => block.type === 'text')
+      .map((block: any) => block.text);
 
     const content = textBlocks.join('\n');
 
@@ -187,8 +187,8 @@ export class PiDiskAdapter {
   private convertToolResult(entry: PiToolResultMessage): Message {
     // Extract text content from result
     const textBlocks = entry.content
-      .filter(block => block.type === 'text')
-      .map(block => (block as any).text);
+      .filter((block: any) => block.type === 'text')
+      .map((block: any) => block.text);
 
     const content = textBlocks.join('\n');
 

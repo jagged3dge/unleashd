@@ -174,7 +174,7 @@ export class TimeoutWrapper {
   async execute<T>(fn: () => Promise<T>, timeout = this.defaultTimeout): Promise<T> {
     return Promise.race([
       fn(),
-      this.createTimeoutPromise(timeout),
+      this.createTimeoutPromise<T>(timeout),
     ]);
   }
 
@@ -182,7 +182,7 @@ export class TimeoutWrapper {
    * Create a promise that rejects after timeout
    */
   private createTimeoutPromise<T>(ms: number): Promise<T> {
-    return new Promise((_, reject) => {
+    return new Promise<T>((_, reject) => {
       setTimeout(() => {
         reject(new Error(`Operation timed out after ${ms}ms`));
       }, ms);
