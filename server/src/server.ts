@@ -33,6 +33,8 @@ import { loadAllConversations, pollForChanges } from './adapters/loader';
 import { formatToolUse, isCompletionOnlyToolUse } from './adapters/tool-format';
 import { type ProviderEvent, getProvider, providers } from './providers';
 import { isModelIdValidForProvider, modelValidationHint } from './providers/model-validation';
+import { PiConversationManager, type ConversationEventCallback } from './providers/pi-conversation-manager';
+import { PiEventTranslator } from './providers/pi-event-translator';
 
 import multer from 'multer';
 import { auditLocalAgents } from './audit.js';
@@ -45,6 +47,9 @@ const wss = new WebSocketServer({ server });
 
 // Store active conversations
 const conversations = new Map<string, Conversation>();
+
+// Pi RPC conversation manager (singleton for all pi conversations)
+const piManager = new PiConversationManager();
 
 // Mtime index for JSONL file polling (filepath → mtime ms)
 let fileMtimes = new Map<string, number>();
@@ -1038,12 +1043,100 @@ class Conversation extends EventEmitter {
       conversationId: this.id,
     });
 
-    // Spawn CLI process with possibly-prefixed content
-    this.spawnForMessage(cliContent);
+    // Use RPC mode for pi, executeCommand for other providers
+    if (this.provider === 'pi') {
+      this.sendMessageViaRpc(cliContent);
+    } else {
+      this.spawnForMessage(cliContent);
+    }
+  }
+
+  /**
+   * Send message via Pi RPC mode
+   * 
+   * Pi uses RPC mode with event callbacks instead of executeCommand streams.
+   * Events are translated and broadcast to WebSocket clients in real-time.
+   */
+  private async sendMessageViaRpc(content: string): Promise<void> {
+    console.log(`[${this.id}] Starting Pi RPC conversation`);
+    this.isRunning = true;
+    this.isStreaming = true;
+    this.broadcastStatus();
+    
+    try {
+      // Start conversation if not already started
+      if (!this._hasStartedSession) {
+        console.log(`[${this.id}] Creating new Pi conversation`);
+        await piManager.createConversation(this.id, {
+          workingDirectory: this.workingDirectory,
+          model: this.model || 'sonnet', // Default to sonnet if no model specified
+        });
+        
+        // Set up event handlers via callback - simplified for initial integration
+        piManager.onEvent(((event: any) => {
+          console.log(`[${this.id}] Pi event:`, event.type);
+          
+          switch (event.type) {
+            case 'text':
+              // For now, just log - full streaming integration needed
+              console.log(`[${this.id}] Pi text chunk:`, event.text?.substring(0, 50));
+              break;
+
+            case 'thinking':
+              console.log(`[${this.id}] Pi thinking:`, event.thinking?.substring(0, 50));
+              break;
+
+            case 'message_complete':
+              console.log(`[${this.id}] Pi message complete`);
+              this.isRunning = false;
+              this.isStreaming = false;
+              this.broadcastStatus();
+              
+              // Dequeue next message if any
+              if (this.queue.length > 0) {
+                const completed = this.queue.shift();
+                console.log(`[${this.id}] Completed queue item: ${completed?.id}`);
+                this.broadcastQueue();
+                this.processQueue();
+              }
+              break;
+
+            case 'error':
+              console.error(`[${this.id}] Pi RPC error:`, event.error);
+              this.isRunning = false;
+              this.isStreaming = false;
+              this.broadcastStatus();
+              break;
+          }
+        }) as ConversationEventCallback);
+
+        this._hasStartedSession = true;
+      }
+
+      // Send the message
+      console.log(`[${this.id}] Sending message to Pi RPC`);
+      await piManager.sendMessage(this.id, content);
+      console.log(`[${this.id}] Message sent to Pi RPC successfully`);
+
+    } catch (error) {
+      console.error(`[${this.id}] Failed to send message via RPC:`, error);
+      this.isRunning = false;
+      this.isStreaming = false;
+      this.broadcastStatus();
+    }
   }
 
   stop(): void {
     this._clearTurnWatchdogs();
+    
+    // Stop pi RPC client
+    if (this.provider === 'pi') {
+      piManager.stopConversation(this.id);
+      this.isRunning = false;
+      this.isStreaming = false;
+      return;
+    }
+
     if (!this.process) return;
 
     const proc = this.process;
@@ -4425,6 +4518,11 @@ function clearSigtermDrainTimers(): void {
 
 process.on('SIGINT', () => {
   console.log('SIGINT — killing child processes and shutting down...');
+  
+  // Stop all pi RPC conversations
+  piManager.stopAll();
+  
+  // Stop all other provider processes
   for (const conv of conversations.values()) {
     if (conv.process) {
       conv.process.kill('SIGKILL');
