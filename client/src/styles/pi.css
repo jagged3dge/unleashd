@@ -1,0 +1,4 @@
+.pi-message { border-left: 3px solid #6366f1; padding: 1rem; }
+.thinking-block { background: rgba(99, 102, 241, 0.1); margin: 0.5rem 0; }
+.cost-display { color: #10b981; font-size: 0.875rem; }
+.token-usage { font-variant-numeric: tabular-nums; }
