@@ -962,3 +962,34 @@ export {
   isCodexUserMessageEvent,
   isCodexAgentMessageEvent,
 } from './adapters/codex-session.types.js';
+
+// Pi session types
+export {
+  // Schemas
+  PiUserMessageSchema,
+  PiAssistantMessageSchema,
+  PiToolResultMessageSchema,
+  PiSystemMessageSchema,
+  PiThinkingBlockSchema,
+  PiUsageStatsSchema,
+  PiCostInfoSchema,
+  PiSessionEntrySchema,
+  // Types
+  type PiUserMessage,
+  type PiAssistantMessage,
+  type PiToolResultMessage,
+  type PiSystemMessage,
+  type PiThinkingBlock,
+  type PiTextBlock,
+  type PiToolUseBlock,
+  type PiContentBlock,
+  type PiUsageStats,
+  type PiCostInfo,
+  type PiSessionEntry,
+  // Type guards
+  isPiUserMessage,
+  isPiAssistantMessage,
+  isPiToolResult,
+  isPiSystemMessage,
+  isPiSessionEntry,
+} from './adapters/pi-session.types.js';

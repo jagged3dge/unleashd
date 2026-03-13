@@ -32,14 +32,14 @@ describe('ConversationId', () => {
     });
 
     it('should reject invalid UUID', () => {
-      assert.throws(
+      expect(() => {
         () => ConversationId.fromString(invalidUuid),
         InvalidConversationIdError
       );
     });
 
     it('should reject empty string', () => {
-      assert.throws(
+      expect(() => {
         () => ConversationId.fromString(''),
         InvalidConversationIdError
       );
@@ -50,13 +50,13 @@ describe('ConversationId', () => {
     it('should be equal to itself', () => {
       const id1 = ConversationId.fromString(validUuid);
       const id2 = ConversationId.fromString(validUuid);
-      assert.ok(id1.equals(id2));
+      expect(id1.equals(id2));
     });
 
     it('should not be equal to different ID', () => {
       const id1 = ConversationId.fromString(validUuid);
       const id2 = ConversationId.fromString('650e8400-e29b-41d4-a716-446655440000');
-      assert.ok(!id1.equals(id2));
+      expect(!id1.equals(id2));
     });
   });
 
@@ -87,12 +87,12 @@ describe('PiModelId', () => {
     it('should parse model with thinking level', () => {
       const id = PiModelId.parse('openai/gpt-4o:high');
       expect(id.toString()).toBe('openai/gpt-4o:high');
-      assert.ok(id.hasThinking());
+      expect(id.hasThinking());
     });
 
     it('should parse model without thinking', () => {
       const id = PiModelId.parse('anthropic/claude-3-5-sonnet');
-      assert.ok(!id.hasThinking());
+      expect(!id.hasThinking());
     });
   });
 
@@ -100,13 +100,13 @@ describe('PiModelId', () => {
     it('should generate command args without thinking', () => {
       const id = PiModelId.parse('anthropic/claude-3-5-sonnet');
       const args = id.toCommandArgs();
-      assert.deepStrictEqual(args, ['--model', 'anthropic/claude-3-5-sonnet']);
+      expect(args).toEqual(['--model', 'anthropic/claude-3-5-sonnet']);
     });
 
     it('should generate command args with thinking', () => {
       const id = PiModelId.parse('openai/gpt-4o:high');
       const args = id.toCommandArgs();
-      assert.deepStrictEqual(args, [
+      expect(args, [
         '--model', 'openai/gpt-4o',
         '--thinking', 'high'
       ]);
@@ -115,21 +115,21 @@ describe('PiModelId', () => {
 
   describe('invalid formats', () => {
     it('should reject model without provider', () => {
-      assert.throws(
+      expect(() => {
         () => PiModelId.parse('claude-3-5-sonnet'),
         InvalidModelIdError
       );
     });
 
     it('should reject empty string', () => {
-      assert.throws(
+      expect(() => {
         () => PiModelId.parse(''),
         InvalidModelIdError
       );
     });
 
     it('should reject model with only provider', () => {
-      assert.throws(
+      expect(() => {
         () => PiModelId.parse('anthropic/'),
         InvalidModelIdError
       );
@@ -141,7 +141,7 @@ describe('PiModelId', () => {
       const id = PiModelId.parse('anthropic/claude:high');
       const args1 = id.toCommandArgs();
       const args2 = id.toCommandArgs();
-      assert.deepStrictEqual(args1, args2);
+      expect(args1).toEqual(args2);
       assert.strictEqual(id.toString(), id.toString());
     });
   });
@@ -155,7 +155,7 @@ describe('Money', () => {
     });
 
     it('should reject negative amounts', () => {
-      assert.throws(
+      expect(() => {
         () => Money.dollars(-5),
         NegativeAmountError
       );
@@ -185,7 +185,7 @@ describe('Money', () => {
     it('should allow subtraction resulting in negative', () => {
       const m1 = Money.dollars(5);
       const m2 = Money.dollars(10);
-      assert.throws(
+      expect(() => {
         () => m1.subtract(m2),
         NegativeAmountError
       );
@@ -194,7 +194,7 @@ describe('Money', () => {
     it('should reject addition with different currencies', () => {
       const usd = Money.dollars(10);
       const eur = Money.euros(10);
-      assert.throws(
+      expect(() => {
         () => usd.add(eur),
         CurrencyMismatchError
       );
@@ -203,7 +203,7 @@ describe('Money', () => {
     it('should reject subtraction with different currencies', () => {
       const usd = Money.dollars(10);
       const eur = Money.euros(5);
-      assert.throws(
+      expect(() => {
         () => usd.subtract(eur),
         CurrencyMismatchError
       );
@@ -250,22 +250,22 @@ describe('ThinkingBlock', () => {
       const block = ThinkingBlock.create('Analyzing the problem...', 0);
       expect(block.getContent()).toBe('Analyzing the problem...');
       expect(block.getIndex()).toBe(0);
-      assert.ok(!block.isEmpty());
+      expect(!block.isEmpty());
     });
 
     it('should create empty thinking block for empty content', () => {
       const block = ThinkingBlock.create('', 0);
-      assert.ok(block.isEmpty());
+      expect(block.isEmpty());
     });
 
     it('should create empty thinking block for whitespace', () => {
       const block = ThinkingBlock.create('   \n  ', 0);
-      assert.ok(block.isEmpty());
+      expect(block.isEmpty());
     });
 
     it('should create empty block explicitly', () => {
       const block = ThinkingBlock.empty(0);
-      assert.ok(block.isEmpty());
+      expect(block.isEmpty());
       expect(block.getContent()).toBe('');
     });
   });
@@ -277,7 +277,7 @@ describe('ThinkingBlock', () => {
     });
 
     it('should reject negative index', () => {
-      assert.throws(
+      expect(() => {
         () => ThinkingBlock.create('content', -1),
         Error
       );
@@ -297,13 +297,13 @@ describe('SessionId', () => {
   describe('generation', () => {
     it('should generate valid session ID', () => {
       const id = SessionId.generate();
-      assert.ok(id.toString().length > 0);
+      expect(id.toString().length > 0);
     });
 
     it('should generate unique IDs', () => {
       const id1 = SessionId.generate();
       const id2 = SessionId.generate();
-      assert.ok(!id1.equals(id2));
+      expect(!id1.equals(id2));
     });
   });
 
@@ -314,14 +314,14 @@ describe('SessionId', () => {
     });
 
     it('should reject empty string', () => {
-      assert.throws(
+      expect(() => {
         () => SessionId.fromString(''),
         Error
       );
     });
 
     it('should reject whitespace', () => {
-      assert.throws(
+      expect(() => {
         () => SessionId.fromString('   '),
         Error
       );
@@ -332,13 +332,13 @@ describe('SessionId', () => {
     it('should be equal to itself', () => {
       const id1 = SessionId.fromString('session-1');
       const id2 = SessionId.fromString('session-1');
-      assert.ok(id1.equals(id2));
+      expect(id1.equals(id2));
     });
 
     it('should not be equal to different ID', () => {
       const id1 = SessionId.fromString('session-1');
       const id2 = SessionId.fromString('session-2');
-      assert.ok(!id1.equals(id2));
+      expect(!id1.equals(id2));
     });
   });
 
@@ -367,12 +367,12 @@ describe('Value object integration', () => {
     const thinking = ThinkingBlock.create('Analyzing request...', 0);
     
     // Verify all work together
-    assert.ok(convId.toString().length > 0);
-    assert.deepStrictEqual(model.toCommandArgs(), [
+    expect(convId.toString().length > 0);
+    expect(model.toCommandArgs(), [
       '--model', 'anthropic/claude-3-5-sonnet',
       '--thinking', 'high'
     ]);
     expect(totalCost.format()).toBe('$0.0055');
-    assert.ok(!thinking.isEmpty());
+    expect(!thinking.isEmpty());
   });
 });
