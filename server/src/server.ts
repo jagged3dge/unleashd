@@ -1076,13 +1076,15 @@ class Conversation extends EventEmitter {
     try {
       // Start conversation if not already started
       if (!this._hasStartedSession) {
-        console.log(`[${this.id}] Creating new Pi conversation`);
+        console.log(`[${this.id}] Creating new Pi conversation (sessionId=${this.sessionId})`);
         await piManager.createConversation(this.id, {
           workingDirectory: this.workingDirectory,
           model: this.model || 'sonnet', // Default to sonnet if no model specified
+          sessionId: this.sessionId, // Pass sessionId for resume support
+          resume: false, // First message doesn't resume
         });
         
-        // Set up event handlers via callback
+        // Set up event handlers via callback (only once, when creating)
         piManager.onEvent(((event: any) => {
           console.log(`[${this.id}] Pi event:`, event.type);
           
